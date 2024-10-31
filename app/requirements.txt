@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pandas
+sqlalchemy
+pymysql
+requests
+python-dotenv
+cryptography
+numpy

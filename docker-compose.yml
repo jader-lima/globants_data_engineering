@@ -1,0 +1,69 @@
+version: "3.9"
+   
+services:
+    mysql:
+        container_name: mysql
+        image: mysql
+        cap_add:
+            - SYS_NICE
+        restart: always
+        env_file:
+            - .env
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${MYSQL_DATABASE}
+            MYSQL_USER: ${MYSQL_USER}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+        ports:
+            - 9906:3306
+        networks:
+            - mysql-network
+        volumes:
+            - mysql-volume:/var/lib/mysql
+            - ./data:/var/lib/mysql-files:rw         
+            - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+        command: ["--secure-file-priv='/var/lib/mysql-files/'","--loose-local-infile=1", "--local-infile=1" ]
+
+    phpmyadmin:        
+        container_name: phpmyadmin
+        image: phpmyadmin/phpmyadmin
+        ports:
+            - 8080:80
+        restart: always
+        environment:
+            PMA_HOST: mysql
+        depends_on:
+            - mysql
+        networks:
+            - mysql-network
+        volumes:
+            - ./data:/opt/data:rw
+
+    app:
+        container_name: api-company-service
+        image: company-api:latest
+        build: ./app
+        env_file:
+            - .env
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${MYSQL_DATABASE}
+            MYSQL_USER: ${MYSQL_USER}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+        ports:
+            - "8000:8000"
+        depends_on:
+            - mysql        
+        volumes:
+            - ./data:/opt/files:rw   
+        networks:
+            - mysql-network
+
+networks: 
+    mysql-network:
+      driver: bridge
+      
+volumes:
+    mysql-volume:
+
+
